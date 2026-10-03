@@ -1,0 +1,10 @@
+{
+  "name": "common-lib",
+  "version": "1.0.0",
+  "description": "Shared validation + constants for api and ui (NOT deployed alone)",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  }
+}

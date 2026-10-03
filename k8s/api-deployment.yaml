@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: node-api }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: node-api } }
+  template:
+    metadata: { labels: { app: node-api } }
+    spec:
+      containers:
+        - name: api
+          image: my-app/node-api:latest # built from apps/node-api/Dockerfile
+          ports: [{ containerPort: 3000 }]
+          env:
+            - { name: NODE_ENV, value: production }
+            - { name: PORT, value: "3000" }
+            - { name: DB_HOST, value: mysql }
+            - { name: DB_USER, value: root }
+            - { name: DB_NAME, value: nodejs_ecom }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: api-secrets, key: db-password } }
+          # startup fails while mysql warms up; readiness keeps bad pods out of service.
+          # liveness restarts a hung pod. both hit the Process-API health we added.
+          readinessProbe:
+            httpGet: { path: /api/v1/health, port: 3000 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/v1/health, port: 3000 }
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: node-api }
+spec:
+  selector: { app: node-api }
+  ports: [{ port: 80, targetPort: 3000 }]
+

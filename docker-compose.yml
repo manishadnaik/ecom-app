@@ -1,0 +1,44 @@
+# Local dev: mysql + api (node) + ui (nginx build).
+# UI runs via `npm run dev:ui` outside docker for speed, or `docker compose --profile ui up` to test built UI.
+services:
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: nodejs_ecom
+    ports: ["3306:3306"]
+    volumes: ["mysql-data:/var/lib/mysql"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-psecret"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  api:
+    build:
+      context: .
+      dockerfile: apps/node-api/Dockerfile
+    environment:
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASSWORD: secret
+      DB_NAME: nodejs_ecom
+      PORT: 3000
+    ports: ["3000:3000"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      # health endpoint we added: GET /api/v1/health
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/v1/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  ui:
+    profiles: ["ui"] # opt-in: `docker compose --profile ui up --build`
+    build:
+      context: .
+      dockerfile: apps/react-ui/Dockerfile
+    ports: ["8080:80"]
+    depends_on: [api]
+volumes:
+  mysql-data:

@@ -1,0 +1,18 @@
+{
+  "name": "my-app-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo: node-api (Express+Sequelize) + react-ui (Vite+MUI) + common-lib shared. npm workspaces.",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w node-api",
+    "dev:ui": "npm run dev -w react-ui",
+    "build": "npm run build -w react-ui",
+    "lint": "npm run lint -w node-api",
+    "install:all": "npm install"
+  }
+}

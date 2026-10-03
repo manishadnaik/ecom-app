@@ -1,0 +1,31 @@
+# Root .gitignore for my-app-monorepo (covers apps/* + packages/*).
+# One file at root is enough - no per-app .gitignore needed.
+
+# Dependencies (every app + package + root)
+node_modules/
+.pnp
+.pnp.js
+
+# Env files (DB passwords, Gemini key - never commit)
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Build output
+apps/react-ui/dist/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Test coverage
+coverage/
+new-topics-to-learn.txt
