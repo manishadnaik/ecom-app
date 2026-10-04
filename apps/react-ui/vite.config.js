@@ -8,6 +8,8 @@ export default {
     port: 5173,
     proxy: {
       '/api': { target: 'http://localhost:3000', changeOrigin: true },
+      // uploaded files live at API root (/uploads), not /api/v1 - proxy them too
+      '/uploads': { target: 'http://localhost:3000', changeOrigin: true },
     },
   },
   preview: { port: 4173 },

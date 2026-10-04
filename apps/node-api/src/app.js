@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import routes from './routes/index.js';
 import { globalLimiter } from './middlewares/rate-limit.js';
 
@@ -16,6 +18,10 @@ app.set('trust proxy', 1);
 app.use(cors());
 app.use(express.json());
 app.use(globalLimiter);
+
+// Uploaded product images (Option B). Files land in <api-root>/uploads.
+const here = path.dirname(fileURLToPath(import.meta.url));
+app.use('/uploads', express.static(path.resolve(here, '..', 'uploads')));
 
 // Mount API routes at /api
 app.use('/api/v1', routes);
@@ -56,6 +62,14 @@ app.use((err, req, res, next) => {
       status: 'error',
       error: 'Request body must be valid JSON',
       field: 'body',
+    });
+  }
+  // Multer upload errors (wrong type, too big) -> 400, not 500
+  if (err.message === 'Only image files are allowed' || err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({
+      status: 'error',
+      error: err.code === 'LIMIT_FILE_SIZE' ? 'Image must be under 5MB' : err.message,
+      field: 'image',
     });
   }
   // Generic fallback for unhandled exceptions

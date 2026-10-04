@@ -14,7 +14,10 @@ import { Product, Category, OrderItem } from '../models/index.js';
  *   ?inStock=true     — only products where stock_quantity > 0
  *
  * @param   {object} query
- * @returns {Promise<Array>}
+ *   ?page=1&limit=12  — pagination (limit capped at 100)
+ *
+ * @param   {object} query
+ * @returns {Promise<{rows: Array, count: number, page: number, limit: number, totalPages: number}>}
  */
 const getAllProducts = async (query) => {
   const where = {};
@@ -26,7 +29,10 @@ const getAllProducts = async (query) => {
   if (query.inStock === false) {
     where.stock_quantity = 0;
   }
-  const options = { where, order: [['id', 'ASC']] };
+  const page = query.page ?? 1;
+  const limit = query.limit ?? 12;
+  const offset = (page - 1) * limit;
+  const options = { where, order: [['id', 'ASC']], limit, offset, distinct: true };
 
   if (query.category) {
     // When category filter is provided, eager-load Category and filter
@@ -37,8 +43,12 @@ const getAllProducts = async (query) => {
         attributes: ['id', 'name'],
       },
     ];
+  } else {
+    // Always include category so UI shows names without extra calls
+    options.include = [{ model: Category, attributes: ['id', 'name'] }];
   }
-  return Product.findAll(options);
+  const { rows, count } = await Product.findAndCountAll(options);
+  return { rows, count, page, limit, totalPages: Math.max(1, Math.ceil(count / limit)) };
 };
 
 /**

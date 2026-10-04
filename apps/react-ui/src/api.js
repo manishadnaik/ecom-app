@@ -55,6 +55,23 @@ export const updateProduct = (id, payload) =>
 
 export const deleteProduct = (id) => api(`/products/${id}`, { method: 'DELETE' });
 
+// Image upload uses multipart, NOT JSON - so bypass the api() helper (no Content-Type;
+// browser sets boundary). Path includes /api/v1 prefix directly.
+export const uploadProductImage = async (id, file) => {
+  const fd = new FormData();
+  fd.append('image', file);
+  const res = await fetch(`/api/v1/products/${id}/image`, { method: 'POST', body: fd });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.error || `Upload failed (${res.status})`);
+  return data;
+};
+
+export const createOrder = (payload) =>
+  api('/orders', { method: 'POST', body: JSON.stringify(payload) });
+
+export const updateOrderStatus = (id, status) =>
+  api(`/orders/${id}`, { method: 'PUT', body: JSON.stringify({ status }) });
+
 export const cancelOrder = (id) => api(`/orders/${id}`, { method: 'DELETE' });
 
 export const runQuery = (query) =>

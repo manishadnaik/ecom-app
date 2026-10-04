@@ -9,9 +9,10 @@ import { productQuerySchema } from '../validators/products-search-query.js';
 
 const getAll = async (req, res, next) => {
   try {
-    const validatedQuery = productQuerySchema.parse(req.query);
-    const products = await productService.getAllProducts(validatedQuery);
-    res.status(200).json({ status: 'success', rowCount: products.length, data: products});
+    // validate() middleware already parsed query into req.validated.query (Express 5 query is getter-only)
+    const validatedQuery = req.validated?.query ?? productQuerySchema.parse(req.query);
+    const { rows, count, page, limit, totalPages } = await productService.getAllProducts(validatedQuery);
+    res.status(200).json({ status: 'success', rowCount: rows.length, meta: { total: count, page, limit, totalPages }, data: rows });
   } catch (error) {
     next(error);
   }
@@ -128,4 +129,28 @@ const remove = async (req, res, next) => {
   }
 };
 
-export { getAll, getOne, create, update, remove };
+/**
+ * Upload/replace a product's image (Option B).
+ * POST /api/v1/products/:id/image with multipart field "image".
+ * Stores file under /uploads, saves image_url on the product, invalidates cache.
+ */
+const uploadImage = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const product = await productService.getProductById(id);
+    if (!product) {
+      return res.status(404).json({ status: 'error', error: 'Product not found', field: 'id' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ status: 'error', error: 'No image file provided (field: image)', field: 'image' });
+    }
+    const imageUrl = `/uploads/${req.file.filename}`;
+    await productService.updateProduct(id, { image_url: imageUrl });
+    const fresh = await productService.getProductById(id);
+    res.status(200).json({ status: 'success', data: fresh });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { getAll, getOne, create, update, remove, uploadImage };

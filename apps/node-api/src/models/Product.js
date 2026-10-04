@@ -11,6 +11,7 @@ import sequelize from '../config/database.js';
  *   name            - STRING, NOT NULL
  *   description     - TEXT, nullable
  *   category_id     - INT, NOT NULL, foreign key referencing Category.id
+ *   image_url       - STRING(512), nullable (Option B: uploaded file or remote URL)
  *   price           - DECIMAL(10, 2), NOT NULL, >= 0
  *   stock_quantity  - INTEGER, NOT NULL, >= 0
  *   status          - ENUM('ACTIVE', 'INACTIVE'), NOT NULL, default 'ACTIVE'
@@ -36,6 +37,19 @@ const Product = sequelize.define(
     category_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    image_url: {
+      type: DataTypes.STRING(512),
+      allowNull: true,
+      validate: {
+        // allow relative /uploads/xxx paths or full http(s) URLs, but nothing else
+        isValidImageUrl(value) {
+          if (value == null || value === '') return;
+          if (value.startsWith('/uploads/')) return;
+          if (/^https?:\/\/.+/i.test(value)) return;
+          throw new Error('image_url must be a /uploads/... path or http(s) URL');
+        },
+      },
     },
     price: {
       type: DataTypes.DECIMAL(10, 2),

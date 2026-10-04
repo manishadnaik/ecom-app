@@ -23,13 +23,14 @@ export const validate = (schema, source = 'body') => async (req, res, next) => {
 
     const validatedValue = await schema.parseAsync(valueToValidate);
 
-    // Replace the original value with the strictly typed, sanitized data
+    // Replace the original value with the strictly typed, sanitized data.
+    // NOTE: in Express 5 req.query / req.params are getter-only, so we must
+    // NOT assign to them. Body is still safe to overwrite. Validated
+    // query/params live on req.validated for controllers to use.
     if (source === 'body') {
       req.body = validatedValue;
-    } else if (source === 'params') {
-      req.params = validatedValue;
     } else {
-      req.query = validatedValue;
+      req.validated = { ...(req.validated || {}), [source]: validatedValue };
     }
     return next();
   } catch (error) {
