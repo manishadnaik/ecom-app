@@ -55,6 +55,10 @@ const OrderItem = sequelize.define(
         fields: ['order_id', 'product_id'],
         name: 'order_items_order_id_product_id_unique',
       },
+      // cancel flow restores stock per item: WHERE order_id = ? (no full scan)
+      { fields: ['order_id'] },
+      // delete-product guard: WHERE product_id = ? + revenue JOINs on product_id
+      { fields: ['product_id'] },
     ],
   },
 );

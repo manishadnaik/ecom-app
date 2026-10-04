@@ -73,6 +73,12 @@ const Product = sequelize.define(
   },
   {
     tableName: 'products',
+    // catalog filters hit these on every browse: category join + inStock scan.
+    indexes: [
+      { fields: ['category_id'] },
+      { fields: ['status'] },
+      { fields: ['stock_quantity'] },
+    ],
   },
 );
 

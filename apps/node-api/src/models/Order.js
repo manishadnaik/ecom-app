@@ -47,6 +47,14 @@ const Order = sequelize.define(
   },
   {
     tableName: 'orders',
+    // #10 N+1/indexes: these cover the hot lookups - orders by customer
+    // (account page), by status (admin filter), by date (reports).
+    // Without them MySQL does a full table scan once orders grow.
+    indexes: [
+      { fields: ['customer_id'] },
+      { fields: ['status'] },
+      { fields: ['order_date'] },
+    ],
   },
 );
 

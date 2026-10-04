@@ -39,6 +39,7 @@ docker compose --profile ui up --build  # also serves UI on :8080
 - Safety: global rate limit 200/15min, order create 30/min, graceful shutdown (SIGTERM), trust proxy for real IP
 - Logging: no console.log in request path (services/controllers) - only server boot + seed scripts log
 - Tests: `npm test -w node-api` (node --test + supertest, no DB needed) - 7 tests: query 429 block, rate headers, cache MISS->HIT, invalidate on write, race locked 1-win, race unlocked oversell, stream CSV export
+- Query health: declarative indexes on products (category_id, status, stock_quantity), orders (customer_id, status, order_date), order_items (order_id, product_id) — see docs/query-health.md for N+1 status + EXPLAIN demo
 - Express 5 note: `req.query`/`req.params` are getter-only - validate() stores parsed values on `req.validated.query/params` instead of overwriting
 
 ```bash
@@ -58,7 +59,7 @@ npm test -w node-api
 - S2 Product detail: Details button expands description/stock/status inline on card
 - Products CRUD: Add/Edit dialog with category dropdown + Image URL field + file picker (file upload wins, max 5MB images-only), Delete confirm (409 if in orders), toast + refetch
 - S3 Orders create: New order dialog (customer dropdown + up to 5 line items with stock hints, duplicate/empty guarded client-side, 400 stock/404 customer/429 shown from backend), toast + refetch
-- S4 Orders list/update: table + status chip, Status dialog (PENDING/CONFIRMED/SHIPPED/DELIVERED via PUT), cancel with confirm (DELETE restores stock, 409 if shipped), toast + refetch
+- S4 Orders list/update: memoized table rows (memo + useCallback, unchanged rows skip re-render), Status dialog (PENDING/CONFIRMED/SHIPPED/DELIVERED via PUT), cancel with confirm (DELETE restores stock, 409 if shipped), toast + refetch
 - S5 Customers: table + Add/Edit dialog (name/email required), delete confirm, 409 has-orders + 400 duplicate email shown from backend
 - S6 Query console: example prompts, shows generated SQL + result table, friendly 429 message
 - Shell: AppBar nav (Products/Orders/Customers/Query), shared Loading/ErrorBox/Empty, Context toasts (no redux), useApi hook (no react-query)

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -23,6 +23,25 @@ import { useToast } from '../store.jsx';
 // S3 create (customer + up to 5 line items) + S4 list/cancel + status advance.
 // Backend enforces: customer exists, stock locked, no duplicate product, max 5 items.
 // confirm dialog avoids accidental cancel - backend also guards non-cancellable states.
+//
+// perf note (#12): rows are memoized - typing in the create dialog or opening a
+// dialog re-renders this page, but unchanged rows skip re-render. Handlers are
+// useCallback'd so row props keep referential equality.
+const OrderRow = memo(function OrderRow({ order, onStatus, onCancel }) {
+  return (
+    <TableRow>
+      <TableCell>#{order.id}</TableCell>
+      <TableCell>
+        <Chip size="small" label={order.status} />
+      </TableCell>
+      <TableCell>${order.total_amount ?? '—'}</TableCell>
+      <TableCell align="right">
+        <Button size="small" onClick={() => onStatus(order.id)}>Status</Button>
+        <Button size="small" color="error" onClick={() => onCancel(order.id)}>Cancel</Button>
+      </TableCell>
+    </TableRow>
+  );
+});
 export default function OrdersPage() {
   const { data, loading, error, setData } = useApi(fetchOrders, []);
   const [confirmId, setConfirmId] = useState(null);
@@ -43,6 +62,10 @@ export default function OrdersPage() {
   const orders = useMemo(() => data?.data || [], [data]);
 
   const reload = async () => setData(await fetchOrders());
+
+  // stable handlers - rows only re-render when their order object changes
+  const openStatus = useCallback((id) => { setStatusId(id); setNextStatus('CONFIRMED'); setLocalError(''); }, []);
+  const askCancel = useCallback((id) => setConfirmId(id), []);
 
   const openCreate = async () => {
     setFormError(''); setCustomerId(''); setRows([{ product_id: '', quantity: 1 }]);
@@ -124,17 +147,7 @@ export default function OrdersPage() {
             </TableHead>
             <TableBody>
               {orders.map((o) => (
-                <TableRow key={o.id}>
-                  <TableCell>#{o.id}</TableCell>
-                  <TableCell>
-                    <Chip size="small" label={o.status} />
-                  </TableCell>
-                  <TableCell>${o.total_amount ?? '—'}</TableCell>
-                  <TableCell align="right">
-                    <Button size="small" onClick={() => { setStatusId(o.id); setNextStatus('CONFIRMED'); setLocalError(''); }}>Status</Button>
-                    <Button size="small" color="error" onClick={() => setConfirmId(o.id)}>Cancel</Button>
-                  </TableCell>
-                </TableRow>
+                <OrderRow key={o.id} order={o} onStatus={openStatus} onCancel={askCancel} />
               ))}
             </TableBody>
           </Table>
