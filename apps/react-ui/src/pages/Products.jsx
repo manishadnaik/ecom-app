@@ -126,7 +126,15 @@ export default function ProductsPage() {
     <div>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
         <Typography variant="h5">Products</Typography>
-        <Button variant="contained" onClick={openCreate}>Add product</Button>
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined"
+            href={`/api/v1/products/export?format=csv${category ? `&category=${encodeURIComponent(category)}` : ''}`}
+          >
+            Export CSV
+          </Button>
+          <Button variant="contained" onClick={openCreate}>Add product</Button>
+        </Stack>
       </Stack>
       <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
         <TextField size="small" label="Category" value={category || ''} select

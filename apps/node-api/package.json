@@ -10,7 +10,7 @@
     "db:reset": "node src/config/initDb.js",
     "db:seed": "node src/seed/seed.js",
     "lint": "eslint src/",
-    "test": "node --test tests/rate-limit.test.js tests/cache.test.js"
+    "test": "node --test tests/rate-limit.test.js tests/cache.test.js tests/race.test.js tests/stream.test.js"
   },
   "dependencies": {
     "@google/genai": "^2.21.0",
