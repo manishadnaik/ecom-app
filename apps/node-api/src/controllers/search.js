@@ -64,7 +64,7 @@ CRITICAL RULES:
 1. Return ONLY the raw SQL query. Do not wrap it in markdown code blocks like \\\`\\\`\\\`sql.
 2. Do not include any explanations, conversational text, or introductions.
 3. Only use tables and columns defined in the schema.
-4. For text matches (like email or category), use exact matches or standard SQL operators.
+4. For text matches, compare against actual values stored in the database: use exact match (=) when the input is a complete known value (email, status, category name), and partial match (LIKE '%term%') when the input may be a fragment of a stored value (e.g. person names: "Find all orders by Alice" -> WHERE customers.name LIKE '%Alice%' so it matches "Alice Johnson").
 5. Create optimized sql query, do not select all columns.
 6. Strict Column Selection: Never use SELECT *. You must explicitly select only necessary fields.
 7. Data Protection: Exclude crucial, internal, or highly sensitive columns (e.g., customer passwords, internal cost margins, full tracking tokens, or backend audit timestamps).
